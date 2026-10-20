@@ -98,11 +98,13 @@ def run_comparison(aux_df, main_df, aux_name_col, aux_value_col, main_name_col, 
     )
     result = a.merge(m, on="Nome normalizado", how="outer", indicator=True)
     result["Diferença"] = result["Valor_MotoX"] - result["Valor_auxiliar"]
+    # Convert to regular string dtype so assigning additional labels works even
+    # when pandas infers categorical values from the merge indicator.
     result["Status"] = result["_merge"].map({
         "both": "Valores conferem",
         "left_only": "Não encontrado na MotoX",
         "right_only": "Somente na MotoX",
-    })
+    }).astype("object")
     both = result["_merge"].eq("both")
     valid = both & result["Valor_auxiliar"].notna() & result["Valor_MotoX"].notna()
     result.loc[valid & (result["Diferença"].abs() > tolerance), "Status"] = "DIVERGÊNCIA DE VALOR"
